@@ -1,0 +1,317 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+\documentclass{beamer}
+
+\mode<presentation> {
+
+\usetheme{Madrid}
+
+\setbeamertemplate{navigation symbols}{}
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Main Project]{ARM11: Emulator \& Assembler} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author[Group MSB]{
+  \textbf{Group MSB (aka 32)}\\
+  \and
+  	Ramon Fern\'{a}ndez i Mir\\
+  \and
+  	Robert Holland\\
+   \and
+	Jennifer Lea \\
+  \and
+  	Aris Papadopoulos\\
+}
+\institute[ICL] {
+
+Imperial College London \\ 
+
+\medskip
+}
+\date{June 17, 2016}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview} 
+
+\tableofcontents 
+
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+\section{Emulator}
+%------------------------------------------------
+
+%------------------------------------------------
+\subsection{The Pipeline} 
+%------------------------------------------------
+\begin{frame}
+\frametitle{Emulator: The Pipeline}
+
+\begin{large}
+Our Aims:
+\end{large}
+
+\begin{itemize}
+
+\item Code that actually \textbf{resembles} the function of the ARM11 Control Unit \\
+
+\item \textbf{Scalable} code, for the addition of new instruction types \\
+
+\item \textbf{Readable} and understandable code \\
+
+\item \textbf{Efficient} code, in terms of group work
+
+\end{itemize}
+
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}[fragile]
+\frametitle{Emulator: The Pipeline}
+
+\begin{columns}
+
+\begin{column}{0.05\textwidth}
+\end{column}
+
+\begin{column}{0.80\textwidth}
+\begin{block}{The main loop}
+\begin{verbatim}
+do {
+  execute();
+  decode();
+  fetch();
+} while (pipeline.decoded.type != HALT);
+\end{verbatim}
+\end{block}
+\end{column}
+
+\begin{column}{0.05\textwidth}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+%------------------------------------------------
+\subsection{Instructions}
+%------------------------------------------------
+\begin{frame}[fragile]
+\frametitle{Emulator: Instructions}
+
+\begin{columns}
+
+\begin{column}{0.05\textwidth}
+\end{column}
+
+\begin{column}{0.90\textwidth}
+\begin{block}{Instruction Structure}
+\begin{verbatim}
+typedef struct Instruction {
+  uint8_t          cond;
+  Instruction_Type type;
+
+  Data_Processing      data_processing;
+  Multiply             multiply;
+  Single_Data_Transfer single_data_transfer;
+  Branch               branch;
+  Left_Shift           left_shift;
+} Instruction;
+\end{verbatim}
+\end{block}
+\end{column}
+
+\begin{column}{0.05\textwidth}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+
+%------------------------------------------------
+\subsection{Test Driven Design}
+%------------------------------------------------
+\begin{frame}
+\frametitle{Emulator: Test Driven Design}
+
+\begin{itemize}
+\item Printing
+\item Word building
+\item CPSR
+\item GPIO
+\end{itemize}
+%------------------------------------------------
+\end{frame}
+
+%------------------------------------------------
+\section{Assembler}
+%------------------------------------------------
+
+%------------------------------------------------
+\subsection{Two-Pass Assembly}
+%------------------------------------------------
+
+\begin{frame}[fragile]
+\frametitle{Assembler: Two-Pass Assembly}
+
+\begin{columns}
+
+\begin{column}{0.07\textwidth}
+\end{column}
+
+\begin{column}{0.80\textwidth}
+\begin{block}{First pass pseudocode}
+\begin{verbatim}
+while (more lines exist) {
+  line = get_line();
+  if (is_label(line)) {
+    put_address(line, line_address);
+  } else if (not empty line) {
+    line_address += WORD_SIZE;
+  }
+}
+end_of_file = line_address;
+\end{verbatim}
+\end{block}
+
+\begin{itemize}
+\item Put all labels in a hash-table, to be used for assembling branch instructions.
+\item Store the number of lines with instructions, to know where the file ends.
+\end{itemize}
+\end{column}
+
+\begin{column}{0.07\textwidth}
+\end{column}
+
+\end{columns}
+\end{frame}
+%------------------------------------------------
+
+\begin{frame}[fragile]
+\frametitle{Assembler: Two-Pass Assembly}
+
+\begin{columns}
+
+\begin{column}{0.07\textwidth}
+\end{column}
+
+\begin{column}{0.80\textwidth}
+\begin{block}{Second pass pseudocode}
+\begin{verbatim}
+while (more lines exist) {
+  line = get_line(); 
+  if (!is_label(line) && !is_empty) {
+    Token instr = tokenize(line);
+    
+    Instruction encoded 
+         = get(mnemonic)->function(arguments);
+   
+    uint32_t assembled = assemble(encoded);
+    write_instruction();
+   
+    current_address += WORD_SIZE;
+  }
+}\end{verbatim}
+\end{block}
+\end{column}
+
+\begin{column}{0.07\textwidth}
+\end{column}
+
+\end{columns}
+
+\end{frame}
+%------------------------------------------------
+\subsection{Hash-Table}
+\begin{frame}[fragile]
+\frametitle{Assembler: Hash-Table}
+
+\begin{large}
+Strengths:
+\end{large}
+
+\begin{itemize}
+\item No giant switch statement
+\item Very scalable
+\item Becomes even quicker as the instruction set grows
+\item Fun to code
+\end{itemize}
+
+\begin{large}
+Limitations:
+\end{large}
+
+\begin{itemize}
+\item Can be as efficient as a linked list
+\item Need to hardcode inputs
+\item More complicated code
+\end{itemize}
+
+\end{frame}
+
+
+
+
+%------------------------------------------------
+\begin{frame}[fragile]
+\frametitle{Assembler: Hash-Table}
+
+\begin{block}{put\_function(char *mnemonic, Instr\_Ptr function)}
+\begin{verbatim}
+if ((curr = get(mnemonic)) == NULL) {
+  curr = (Node *) calloc(1, sizeof(*curr));
+  if (curr == NULL || 
+     (curr->mnemonic = strdup(mnemonic)) == NULL) {
+    return NULL;
+  }
+  hash_code = hash(mnemonic);
+  curr->next = functiontable[hash_code];
+  functiontable[hash_code] = curr;
+} else {
+  free((void *)(&(curr->function)));
+}
+if ((curr->function = function) == NULL) return NULL;
+return curr;
+\end{verbatim}
+\end{block}
+
+\end{frame}
+
+%------------------------------------------------
+\subsection{Test Driven Design}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Assembler: Test Driven Design}
+
+\begin{itemize}
+\item Memory handling
+\item Shifting registers
+\end{itemize}
+
+\end{frame}
+%------------------------------------------------
+
+\end{document} 
